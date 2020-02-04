@@ -1,6 +1,6 @@
 # MDE : Multiple Distance Embeddings for Link Prediction in Knowledge Graphs
 
-This is the PyTorch implementation of MDE . A GPU version with Self-Adversarial Negative Sampling is implemented in [here](https://github.com/mlwin-de/MDE_self_adversarial_negative_sampling).
+This is the PyTorch implementation of MDE. The implementation is tailored for cpu servers and performs distributed testing using 8 CPU cores. A GPU version that includes Self-Adversarial Negative Sampling is implemented in [here](https://github.com/mlwin-de/MDE_self_adversarial_negative_sampling).
 
 
 ** Training ** :
