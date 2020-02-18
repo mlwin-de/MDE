@@ -5,7 +5,6 @@ import torch.optim as optim
 from torch.autograd import Variable
 import torch as torch
 import numpy as np
-#import matplotlib.pyplot as plt
 import sys
 import numpy.matlib as matlib
 import os
@@ -20,7 +19,7 @@ from argparse import ArgumentParser
 parser = ArgumentParser()
 
 parser.add_argument("-d", "--dataset", dest="dataset",
-                    help="training over dataset. It can be 'WN18' 'FB15' 'WN18RR' 'FB15K237' 'CountriesS1' ", metavar="dataset")
+                    help="training over dataset. It can be 'CountriesS1' 'CountriesS2' 'CountriesS3' ", metavar="dataset")
 parser.add_argument("-t", "--task",
                     dest="task", default=True,
                     help="set to perform 'train' or 'test' ")
@@ -139,8 +138,6 @@ class SampleGenerator(nn.Module):
         # x = np.array([X1, X2])
         # X2 = torch.tensor([X2])
         X2 = np.array(X2)
-        # print X2
-        # print
         return X2
 
     def reshuffle(self):
@@ -151,10 +148,7 @@ class SampleGenerator(nn.Module):
 
     # returns splitted training samples
     def get_splitted_set_training_batchs(self, sample_size):
-        #print "get splitting set-..."
         return torch.split(self.training_sample, sample_size)
-    #def get_splitted_set_negative_training_batchs(self, sample_size):
-    #    return torch.split(self.negative_samples, sample_size)
 
 
 class MDE_Model(nn.Module):
@@ -169,14 +163,13 @@ class MDE_Model(nn.Module):
         self.x_drawing = np.zeros(1000)
         self.out_draw = np.zeros(1000)
         self.out_draw_negative_ = np.zeros(1000)
-        self.loss_p_per_triple = 10 # initialize with bigger value than threshold for the first epoch
+        self.loss_p_per_triple = 10 
         self.loss_n_per_triple = 10
         self.batch_counter = 0
         self.gamma_1 = 0
         self.gamma_2 = 0
         self.beta1 = 0
         self.beta2 = 0
-        #self.batch = self.sampler.get_splitted_set_training_batchs(self.config.x_train_bach_size)
 
     def make_splitted_batch(self):
         self.batch = self.sampler.get_splitted_set_training_batchs(self.config.x_train_bach_size)
@@ -188,23 +181,10 @@ class MDE_Model(nn.Module):
 
     def get_variables(self):
         self.x_train = Variable(self.sampler.get_random_training_samples(self.config.x_train_bach_size))
-        # print x_train[0]
-        # print x_train.shape
+
         self.x_train_negative = Variable(torch.tensor(
             self.sampler.get_negative_samples(self.x_train[:, 0], self.x_train[:, 1], self.x_train[:, 2])))
-        # print x_train_negative.shape
-        # clear grads as discussed in prev post
-        # inputs_pos = Variable(h,r,t)
-        # inputs_negative = Variable(h_negative,t_negative,r_negative)
 
-
-    # limit-based scoring loss:  Learning knowledge embeddings by combining
-    # limit-based scoring loss
-    # Margin ranking loss(x_pos, x_neg) = max(0, (x_pos - x_neg) + margin)
-    # Limit-based loss(x_pos, x_neg) = max(0, (x1_pos - margin_1)) + miu * max(0, (x1_neg - margin_2)
-
-    # the default setting was not converging well so I played with it
-    # my edition(convex combination) loss(x_pos, x_neg) = miu_1 *  max(0, (x1_pos - margin_1)) + miu_2 * max(0, (x1_neg - margin_2)
     def loss_func(self, p_score, n_score):
         criterion = nn.MarginRankingLoss(self.config.margin, False)
         y = Variable(torch.Tensor([-1]))
@@ -269,10 +249,6 @@ class MDE_Model(nn.Module):
         b = h + t - r
         c = t + r - h
         d = h - r * t
-        #score_a = torch.norm((a[0, :, :]), p=2, dim=1)
-        #score_b = torch.norm((b[1, :, :]), p=2, dim=1)
-        #score_c = torch.norm((c[2, :, :]), p=2, dim=1)
-        #score_d = (torch.norm((d[3, :, :]), p=2, dim=1))
         score_a = (torch.norm((a[0, :, :]), p=2, dim=1) + torch.norm((a[4, :, :]), p=2, dim=1)) / 2.0
         score_b = (torch.norm((b[1, :, :]), p=2, dim=1) + torch.norm((b[5, :, :]), p=2, dim=1)) / 2.0
         score_c = (torch.norm((c[2, :, :]), p=2, dim=1) + torch.norm((c[6, :, :]), p=2, dim=1)) / 2.0
@@ -315,7 +291,7 @@ class Embeddings(nn.Module):
         a6 = self.entity_embedding6(torch.LongTensor(x))
         a7 = self.entity_embedding7(torch.LongTensor(x))
 
-        a = torch.stack((a0, a1, a2, a3, a4, a5, a6, a7), dim=0)#
+        a = torch.stack((a0, a1, a2, a3, a4, a5, a6, a7), dim=0)
         return a
 
     def get_vectorised_values_relation(self, x):
@@ -327,7 +303,7 @@ class Embeddings(nn.Module):
         a5 = self.relation_embedding5(torch.LongTensor(x))
         a6 = self.relation_embedding6(torch.LongTensor(x))
         a7 = self.relation_embedding7(torch.LongTensor(x))
-        a = torch.stack((a0, a1, a2, a3, a4, a5, a6, a7), dim=0) #
+        a = torch.stack((a0, a1, a2, a3, a4, a5, a6, a7), dim=0) 
         return a
 
     def get_vectorised_value_relation(self, x):
@@ -339,7 +315,7 @@ class Embeddings(nn.Module):
         a5 = self.relation_embedding5(x)
         a6 = self.relation_embedding6(x)
         a7 = self.relation_embedding7(x)
-        a = torch.stack((a0, a1, a2, a3, a4, a5, a6, a7), dim=0)#, a4, a5, a6, a7
+        a = torch.stack((a0, a1, a2, a3, a4, a5, a6, a7), dim=0)
         return a
 
     def get_vectorised_value_entity(self, x):
@@ -351,7 +327,7 @@ class Embeddings(nn.Module):
         a5 = self.entity_embedding5(x)
         a6 = self.entity_embedding6(x)
         a7 = self.entity_embedding7(x)
-        a = torch.stack((a0, a1, a2, a3, a4, a5, a6, a7), dim=0)#, a4, a5, a6, a7
+        a = torch.stack((a0, a1, a2, a3, a4, a5, a6, a7), dim=0)
         return a
 
 
@@ -361,7 +337,7 @@ class Experiment(object):
         self.sampler = SampleGenerator(self.dataset_setting)
         self.config = HyperParameters(self.dataset_setting, self.sampler)
         self.embeddings = Embeddings(self.sampler, self.config)
-        self.model = MDE_Model(self.config,self.sampler, self.embeddings)  # .double()
+        self.model = MDE_Model(self.config,self.sampler, self.embeddings)  
         self.update_gamma_for_loss_function = False
         self.name = "MDE"
         self.sampler.make_all_samples_dic()
@@ -392,8 +368,8 @@ class Experiment(object):
 
                 optimizer.zero_grad()
                 loss, loss_p, loss_n = self.model()
-                loss.backward()  # back props
-                optimizer.step()  # update the parameters
+                loss.backward()  
+                optimizer.step() 
                 sum_loss = sum_loss + loss.item()
                 sum_loss_p = sum_loss_p + loss_p.item()
                 sum_loss_n = sum_loss_n + loss_n.item()
@@ -415,7 +391,6 @@ class Experiment(object):
                     if test_result == 1.0:
                         print("test result is {} .ending of the evaluation".format(test_result))
                         exit()
-                        #self.save_state(epoch)
 
     def save(self, epoch):
         torch.save(self.model.embeddings, self.config.result_dir +"/MDE" + str(epoch)+ self.dataset_setting.dataset + self.name)
@@ -609,9 +584,9 @@ class Experiment(object):
                                                        R).detach().numpy()
             score_test = score_test[0]
             reproduce_head = matlib.repmat(triple, self.model.sampler.entity2id.shape[0], 1)
-            reproduce_head[:, 0] = self.model.sampler.entity2id  # [:, 1]
+            reproduce_head[:, 0] = self.model.sampler.entity2id 
             reproduce_tail = matlib.repmat(triple, self.model.sampler.entity2id.shape[0], 1)
-            reproduce_tail[:, 1] = self.model.sampler.entity2id  # [:, 1]
+            reproduce_tail[:, 1] = self.model.sampler.entity2id  
 
             score_test_head = self.model.predict(
                 self.model.embeddings.get_vectorised_values_entity(reproduce_head[:, 0]),
@@ -648,8 +623,6 @@ class Experiment(object):
                 hit_tail_filtered = np.amin(np.where(scored_reproduce_tail_filtered[:, 0] == score_test)[0])+1
                 hit_head = np.amin(np.where(scored_reproduce_head[:, 0] == score_test)[0])+1
                 hit_tail = np.amin(np.where(scored_reproduce_tail[:, 0] == score_test)[0])+1
-                # print hit_head
-                # print hit_tail
                 if hit_tail < 11:
                     self.hit_ten_tail = self.hit_ten_tail + 1
                 if hit_head < 11:
@@ -729,22 +702,22 @@ class HyperParameters(object):
         self.entity = 0
         self.relation = 0
         self.epochs = 3600
-        self.learning_rate = 10.0 #0.01
+        self.learning_rate = 10.0
         if self.dataset_setting.dataset == "FB15":
-            self.x_feature_dimension = 100#50#10
+            self.x_feature_dimension = 100
             self.margin = 1.0
             self.L1_Norm = False #L2
-            self.number_of_batch = 280#500#460
+            self.number_of_batch = 280
             self.gamma_1 = 14
             self.gamma_2 = 14
             self.beta1 = 1
             self.beta2 = 1
 
         elif self.dataset_setting.dataset == "FB15K237":
-            self.x_feature_dimension = 100#50#10
+            self.x_feature_dimension = 100
             self.margin = 1.0
             self.L1_Norm = False #L2
-            self.number_of_batch = 230#200#230
+            self.number_of_batch = 230
             self.gamma_1 = 9
             self.gamma_2 = 9
             self.beta1 = 1
@@ -761,52 +734,21 @@ class HyperParameters(object):
             self.number_of_batch = 100
 
         elif  self.dataset_setting.dataset == "WN18RR":
-            self.x_feature_dimension = 50#20
+            self.x_feature_dimension = 50
             self.margin = 1.0
             self.L1_Norm = False
-            self.number_of_batch = 50
-            self.gamma_1 = 2#15#1  # 15#2#9#8#7#4#1.4#2
-            self.gamma_2 = 2#15#1  # 15#2#9#8#7#4#1.4#2
+            self.number_of_batch = 85
+            self.gamma_1 = 2
+            self.gamma_2 = 2
             self.beta1 = 1
-            self.beta2 = 5  # 1.5#5
+            self.beta2 = 5  
 
         elif self.dataset_setting.dataset == "CountriesS1" or self.dataset_setting.dataset == "CountriesS2" or self.dataset_setting.dataset == "CountriesS3":
             self.margin = 1.0
-            self.x_feature_dimension = 50#100 #100 foor s1 and s2 was enough to give .1
+            self.x_feature_dimension = 50
             self.L1_Norm = False
-            self.number_of_batch = 90#80#200#100
-            #dataset _country1 1.0 answer was givvinig with settongs of wn18rr
-            #dataset_country2
-            #beta2 = 5
-            #when >2 negative
-            #self.gamma_1 = #1.4 0.9267 #1.2 auc_pr 0.8571 #1.6 auc_pr 0.933 #1.8 .9 #2 .83
-            #self.gamma_2 = #1.4 0.9267 #1.2 auc_pr 0.8571 #1.6 auc_pr 0.933 #1.8 .9 #2 .83
-            #when > gamma_1  negative
-            #self.gamma_1 = 1.5 auc_pr 0.833 #2 auc_pr 0.833 #2.1 auc_pr 0.9 #1.9 auc_pr 0.83# 1.6# 0.9
-            #self.gamma_2 = 1.5 auc_pr 0.833#2 auc_pr 0.833  #2.1 auc_pr 0.9 #1.9 auc_pr 0.83 #1.6 0.9
-            #beta2 = 10
-            #self.gamma_1 =#0 auc_pr 1.0 #.8 auc_pr 0.96 #1 0.96#1.2 auc_pr 0.96#1.4 0.9 #auc_pr 0.9 #1.6 auc_pr 0.7666  reducing gamma and increasing beta2 happends together (and addng dimensioni)
-            #self.gamma_2 =#0 auc_pr 1.0 #.8 auc_pr 0.96 #1 0.96#1.2 auc_pr 0.96#1.4 0.9#auc_pr 0.9 #1.6 auc_pr 0.7666
-
-            #S_3:
-            # auc_pr 0.633 dim=100 beta2=10 self.gamma_2=0
-            # beta2 =5 dim=100 self.gamma_2=.4  auc_pr 0.300
-            # beta2 =15 dim=100 self.gamma_2=.4 auc_pr 0.826
-            # beta2 =8 dim=100 self.gamma_2=.4 auc_pr 0.7
-            # beta2 = 20 dim=200 self.gamma_2=.4 auc_pr 0.566
-            # beta2 = 20 dim=100 self.gamma_2=.4  auc_pr 0.7937
-            # beta2 = 20 dim=100 self.gamma_2=.0  auc_pr 0.5
-            # beta2 = 20 dim=100 self.gamma_2=.6  auc_pr  0.694
-            # beta2 = 10 dim=100 self.gamma_2=.4  auc_pr 0.833 till epoch 1300
-            # beta2 = 10 dim=50 self.gamma_2=.4   auc_pr 0.866  till epoch 1300 self.number_of_batch=100
-            # beta2 = 10 dim=50 self.gamma_2=.4   auc_pr .43  self.number_of_batch=200
-            # beta2 = 10 dim=50 self.gamma_2=.4   auc_pr .33  self.number_of_batch=50
-            # beta2 = 10 dim=50 self.gamma_2=.4   auc_pr 0.8   self.number_of_batch=120
-            # beta2 = 10 dim=50 self.gamma_2=.4   auc_pr 0.933    self.number_of_batch=80
-            # beta2 = 10 dim=50 self.gamma_2=.4   auc_pr 0.73   self.number_of_batch=70
-            # beta2 = 10 dim=50 self.gamma_2=.4   auc_pr auc_pr auc_pr 1.0 till 700 epoch 1200   self.number_of_batch=90
-            # this setting gives 1.0 for S1 and S2 as well
-            # MDE got 1 for all the 3 data asets
+            self.number_of_batch = 90
+            # MDE with this setting gives 1.0 for S1 and S2 and S3
             self.gamma_1 = 0.4
             self.gamma_2 = 0.4
             self.beta1 = 1
@@ -817,8 +759,6 @@ class HyperParameters(object):
         self.result_dir = "tmp"
         self.batch_type = "pre_splitted_batch"  #pre_splitted_batch  random_batch
         print (self.dataset_setting.dataset, self.gamma_1, self.gamma_2, self.beta1, self.beta2, self.learning_rate, self.x_feature_dimension)
-
-        # relation_number = 8  # for wn
 
 
 def find_gamma_experiment(dataset_name):
@@ -845,11 +785,6 @@ def test_experiment(dataset_name):
     experiment.load(epoch = 2500)
     experiment.test()
 
-#find_gamma_experiment("WN18RR")
-#train_experiment("WN18RR")  #MDE_Model_8v.py"WN18RR"# "FB15K237"#"WN18RR"# "FB15"#"FB15"  # "WN18"
-#test_experiment("WN18RR")
-
-
 if args.task == "train":
     train_experiment(args.dataset)
 
@@ -862,9 +797,7 @@ elif args.task == "test":
 else:
     print ("arguments are -t for task that can be 'train' or 'test' or 'find_g' and -d with dataset name which can be WN18RR FB15K237 FB15 WN18")
 
+# run the model like the examples below to perform train and test on the Countries dataset
 # -t train -d CountriesS1
-# on countries_S1 auc_pr 1.0
-
-#-t train -d CountriesS2
-
-#-t train -d CountriesS3
+# -t train -d CountriesS2
+# -t train -d CountriesS3
