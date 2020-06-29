@@ -25,10 +25,11 @@ During the training, a test will be executed after every 50 iterations.
 **Citation**
 If you use the codes, please cite the following paper:
 ```
-@inproceedings{sadeghi2019mde,
-  title={MDE: Multiple distance embeddings for link prediction in knowledge graphs},
-  author={Sadeghi, Afshin and Graux, Damien and Hamed, Shariat Yazdi and Lehmann, Jens},
-  conference={ECAI},
-  year={2020}
+@inproceedings{sadeghi2020mde,
+  title={MDE: Multiple Distance Embeddings for Link Prediction in Knowledge Graphs},
+  author={Sadeghi, Afshin and Graux, Damien and Shariat Yazdi, Hamed and Lehmann, Jens},
+  booktitle={24th European Conference on Artificial Intelligence, ECAI},
+  year={2020},
+  url={http://ecai2020.eu/papers/1271_paper.pdf}
 }
 ```
